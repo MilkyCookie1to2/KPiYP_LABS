@@ -105,7 +105,7 @@ next_el:
 found_m:
 mov cx, 200
 sub cx, si
-mov dx, si  ;di=si-di-bl+1
+mov dx, si  ;di=si-di+bl+1
 sub dx, di
 add dx, bx
 inc dx
