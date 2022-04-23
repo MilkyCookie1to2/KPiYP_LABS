@@ -87,9 +87,6 @@ entry_mas MACRO
     xor si,si
     jmp enter_loop
 
-    enter_loop_1:
-    jmp enter_loop_0
-
     con_enter:
     mov buf[si], al
     inc si
@@ -97,7 +94,7 @@ entry_mas MACRO
     jne enter_loop
 
     sub si, 2
-    ;call to_num
+    ;to_num
         mov mas[di], 0
         mov dx,1
         mov bx,10
@@ -109,14 +106,29 @@ entry_mas MACRO
             sub al, 30h
             push dx
             mul dx
-            pop dx
-            push ax
-            mov ax, dx
-            mul bx
-            mov dx,ax
+            jo overflow_error
+            add mas[di], ax
+            jc overflow_error
             pop ax
-            add mas[di], ax 
-            jnc skip_neg_sigh       ;check OF
+            xor dx,dx
+            mul bx
+            jno no_overflow
+
+            cmp si, 0
+            je no_overflow
+
+            mov dl, buf[0]
+            cmp dl, '-'
+            jne overflow_error
+
+            no_overflow:
+            mov dx,ax
+            jmp skip_neg_sigh
+
+            ;"far" jump
+            enter_loop_1:
+            jmp enter_loop_0
+ 
             overflow_error:
             print_str error_overflow_message
             xor si,si
@@ -127,7 +139,17 @@ entry_mas MACRO
             mov bx,mas[di]
             and bx, 32768
             cmp bx,0
+            je no_overflow_2
+
+            mov bx,mas[di]
+            cmp bx, 32768
             jne overflow_error
+
+            mov bl, buf[0]
+            cmp bl, '-'
+            jne overflow_error
+
+            no_overflow_2:
             pop bx
             dec si
             cmp si, 65535
@@ -287,7 +309,6 @@ add_in_index:
 mov ch, cl
 
 ;check that this number already in index mas
-;dx = adding number
 push di
 push bx
 xor di,di
@@ -328,6 +349,7 @@ jmp add_in_index
 print_max_count:
 print_str message_print_max_count_number
 
+;print max meeting numbers
 xor si,si
 print_number_count_max:
 mov di, index_mas[si]
