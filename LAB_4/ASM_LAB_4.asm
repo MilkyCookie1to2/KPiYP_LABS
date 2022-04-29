@@ -93,6 +93,8 @@ KEYBOARD_INTERRUPT PROC FAR
     je i_exit
     cmp dl, 6Ch
     je i_exit
+    cmp dl, 05h
+    je i_exit
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si-160],1Eh
@@ -106,6 +108,8 @@ KEYBOARD_INTERRUPT PROC FAR
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
+    je i_exit
+    cmp dl, 05h
     je i_exit
     mov es:[si], ' '
     mov es:[si+1], 0Fh
@@ -121,6 +125,8 @@ KEYBOARD_INTERRUPT PROC FAR
     je i_exit
     cmp dl, 6Ch
     je i_exit
+    cmp dl, 05h
+    je i_exit
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si+160],1Fh
@@ -134,6 +140,8 @@ KEYBOARD_INTERRUPT PROC FAR
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
+    je i_exit
+    cmp dl, 05h
     je i_exit
     mov es:[si], ' '
     mov es:[si+1], 0Fh
@@ -519,7 +527,7 @@ TIMER_INTERRUPT PROC FAR
     mov dl, es:[si]
     cmp dl, 07h
     je down_check
-        cmp dl, 1Eh
+    cmp dl, 1Eh
     je activate_down
     cmp dl, 11h
     je activate_down
@@ -609,6 +617,15 @@ TIMER_INTERRUPT PROC FAR
     je minus_tank
     cmp dl, 10h
     je minus_tank
+    mov dl, es:[si]
+    cmp dl, 1Eh
+    je minus_tank
+    cmp dl, 11h
+    je minus_tank
+    cmp dl, 1Fh
+    je minus_tank
+    cmp dl, 10h
+    je minus_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     sub si, 160
@@ -626,6 +643,15 @@ TIMER_INTERRUPT PROC FAR
     cmp dl, 6Ch
     je delete_evil_bomb
     mov dl, es:[si-2]
+    cmp dl, 1Eh
+    je minus_tank
+    cmp dl, 11h
+    je minus_tank
+    cmp dl, 1Fh
+    je minus_tank
+    cmp dl, 10h
+    je minus_tank
+    mov dl, es:[si]
     cmp dl, 1Eh
     je minus_tank
     cmp dl, 11h
@@ -659,6 +685,15 @@ TIMER_INTERRUPT PROC FAR
     je minus_tank
     cmp dl, 10h
     je minus_tank
+    mov dl, es:[si]
+    cmp dl, 1Eh
+    je minus_tank
+    cmp dl, 11h
+    je minus_tank
+    cmp dl, 1Fh
+    je minus_tank
+    cmp dl, 10h
+    je minus_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     add si, 160
@@ -684,12 +719,25 @@ TIMER_INTERRUPT PROC FAR
     je minus_tank
     cmp dl, 10h
     je minus_tank
+    mov dl, es:[si]
+    cmp dl, 1Eh
+    je minus_tank
+    cmp dl, 11h
+    je minus_tank
+    cmp dl, 1Fh
+    je minus_tank
+    cmp dl, 10h
+    je minus_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     add si, 2
     mov bomb_evil_tank_position, si
+    mov dh, es:[si+2]
+    mov dl, es:[si+3]
     mov es:[si], 07h
     mov es:[si+1], 05h
+    mov es:[si+2], dh
+    mov es:[si+3], dl
     jmp exit_from_int
 
     minus_tank:
