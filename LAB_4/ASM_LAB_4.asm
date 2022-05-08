@@ -8,8 +8,6 @@ exit_message_size equ 8
 strelka db '>', 6Fh
 time_message db 'T', 0Fh, 'I', 0Fh, 'M', 0Fh, 'E', 0Fh
 time_message_size equ 8
-evil_message db 'L', 0Fh,'o', 0Fh,'g', 0Fh,'i', 0Fh,'n', 0Fh
-evil_message_size equ 10
 castle_hp_message db 'C', 0Fh,'A', 0Fh,'S', 0Fh,'T', 0Fh,'L', 0Fh,'E', 0Fh,' ', 0Fh,'H', 0Fh,'P', 0Fh,' ', 0Fh, 181, 0Fh, 219, 7Ah, 219, 7Ah,219, 7Ah,219, 7Ah,219, 7Ah, 198,0Fh
 castle_hp_message_size equ 34
 retry_message db 'R', 6Fh,'E', 6Fh,'T', 6Fh,'R', 6Fh,'Y', 6Fh
@@ -18,6 +16,8 @@ victory_message db 01h, 6Fh, ' ', 6Fh,'V', 6Fh,'I', 6Fh,'C', 6Fh,'T', 6Fh,'O', 6
 victory_message_size equ 18
 fail_message db ':', 6Fh,'(', 6Fh,' ', 6Fh,'F', 6Fh,'A', 6Fh,'I', 6Fh,'L', 6Fh
 fail_message_size equ 14
+total_time_message db 'T', 6Fh,'O', 6Fh,'T', 6Fh,'A', 6Fh,'L', 6Fh,' ', 6Fh,'T', 6Fh,'I', 6Fh,'M', 6Fh,'E', 6Fh,':', 6Fh,' ', 6Fh
+total_time_message_size equ 24
 map db ' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,220,6Ch,219,6Ch,220,6Ch,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh, ' ', 6Fh, ' ', 6Fh, ' ', 6Fh, ' ', 6Fh, ' ', 6Fh   ;46
     db ' ',6Fh,' ',6Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh,' ',0Fh, ' ', 0Fh, ' ', 0Fh, ' ', 0Fh, ' ', 6Fh, ' ', 6Fh
     db ' ',6Fh,' ',6Fh,' ',0Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',0Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh,' ',6Fh, ' ', 6Fh, ' ', 6Fh, ' ', 0Fh, ' ', 6Fh, ' ', 6Fh
@@ -88,13 +88,16 @@ KEYBOARD_INTERRUPT PROC FAR
     jmp i_exit
 
     up:
+    mov dl, es:[si+1]
+    cmp dl, 05h
+    je minus_hp_tank
     mov dl, es:[si-159]
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
     je i_exit
     cmp dl, 05h
-    je i_exit
+    je minus_hp_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si-160],1Eh
@@ -104,13 +107,16 @@ KEYBOARD_INTERRUPT PROC FAR
     jmp i_exit
 
     left:
+    mov dl, es:[si+1]
+    cmp dl, 05h
+    je minus_hp_tank
     mov dl, es:[si-1]
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
     je i_exit
     cmp dl, 05h
-    je i_exit
+    je minus_hp_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si-2],11h
@@ -120,13 +126,16 @@ KEYBOARD_INTERRUPT PROC FAR
     jmp i_exit
 
     down:
+    mov dl, es:[si+1]
+    cmp dl, 05h
+    je minus_hp_tank
     mov dl, es:[si+161]
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
     je i_exit
     cmp dl, 05h
-    je i_exit
+    je minus_hp_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si+160],1Fh
@@ -136,13 +145,16 @@ KEYBOARD_INTERRUPT PROC FAR
     jmp i_exit
 
     right:
+    mov dl, es:[si+1]
+    cmp dl, 05h
+    je minus_hp_tank
     mov dl, es:[si+3]
     cmp dl,6fh
     je i_exit
     cmp dl, 6Ch
     je i_exit
     cmp dl, 05h
-    je i_exit
+    je minus_hp_tank
     mov es:[si], ' '
     mov es:[si+1], 0Fh
     mov es:[si+2],10h
@@ -238,6 +250,10 @@ KEYBOARD_INTERRUPT PROC FAR
     mov es:[404], 198
     mov es:[405], 0Fh
     dec castle_hp
+    jmp i_exit
+
+    minus_hp_tank:
+    dec tank_hp
 
     i_exit:  
     mov al, 20h 
@@ -246,9 +262,6 @@ KEYBOARD_INTERRUPT PROC FAR
 KEYBOARD_INTERRUPT ENDP 
 
 TIMER_INTERRUPT PROC FAR
-    pushf
-    call dword ptr [ds:old_int_1C]
-
     inc time
     call print_time
 
@@ -751,6 +764,13 @@ TIMER_INTERRUPT PROC FAR
 
 
     exit_from_int:
+    mov ax, tank_position
+    mov dx, evil_tank_position
+    cmp ax, dx
+    je kill_tank
+    iret
+    kill_tank:
+    dec tank_hp
     iret
 TIMER_INTERRUPT ENDP 
 
@@ -786,6 +806,45 @@ print_time PROC
     mov es:[231], 0Fh
     ret
 print_time ENDP
+
+print_total_time PROC
+    mov cx, total_time_message_size
+    mov di,word ptr 698
+    mov si, offset total_time_message
+    cld
+    rep movsb
+
+    mov ax, time
+    xor dx,dx
+    mov bx, 18
+    div bx
+    xor dx,dx
+    mov bx, 60
+    div bx
+    mov cx,dx
+    xor dx,dx
+    mov bx,10
+    div bx
+    add ax, 30h
+    add dx, 30h
+    mov es:[722], ax
+    mov es:[723], 6Fh
+    mov es:[724], dx
+    mov es:[725], 6Fh
+    mov es:[726], ':'
+    mov es:[727], 6Fh
+
+    mov ax,cx
+    xor dx,dx
+    div bx
+    add ax, 30h
+    add dx, 30h
+    mov es:[728], ax
+    mov es:[729], 6Fh
+    mov es:[730], dx
+    mov es:[731], 6Fh
+    ret
+print_total_time ENDP
 
 restore_interrupts PROC
     mov ax, 251Ch
@@ -834,7 +893,6 @@ rep movsb
 
 mov es:[1986], '>'
 mov es:[1987], 6Fh
-
 
 ENTER:
 mov ah, 10h
@@ -906,14 +964,6 @@ mov es:[26], 1
 mov es:[27], 0Ch
 mov es:[28], 221
 mov es:[29], 0Ch
-mov es:[30], 27
-mov es:[31], 0Fh
-
-mov cx, evil_message_size
-mov di,word ptr 32
-mov si, offset evil_message
-cld
-rep movsb
 
 mov cx, time_message_size
 mov di,word ptr 212
@@ -1004,6 +1054,8 @@ rep movsb
 
 CONTINUE_MENU:
 ;set menu
+call print_total_time
+
 mov cx, retry_message_size
 mov di,word ptr 1990
 mov si, offset retry_message

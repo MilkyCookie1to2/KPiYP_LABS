@@ -47,7 +47,11 @@ enter_string MACRO str
     mov ah, 02h
     mov dl, 08h
     int 21h
-    jmp back_s
+    mov dl, 20h
+    int 21h
+    mov dl, 08h
+    int 21h
+    jmp enter_loop
 
     continue:
     mov str[si],al
@@ -92,7 +96,11 @@ enter_word MACRO str
     mov ah, 02h
     mov dl, 08h
     int 21h
-    jmp back
+    mov dl, 20h
+    int 21h
+    mov dl, 08h
+    int 21h
+    jmp enter_loop_word
     
     continue_enter:
     mov str[si],al
@@ -129,7 +137,8 @@ ENDM
 
 start:
 mov ax,DGROUP
-mov ds,ax
+push ax
+pop ds
 mov es,ax
 
 print_str message_enter_string
@@ -176,7 +185,6 @@ jmp NotEqual
 
 Equal:
 ;remove word
-print_str message1
 mov si, bx
 mov di, bx
 add di, size_word
